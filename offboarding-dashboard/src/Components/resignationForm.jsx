@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { User, Building2, Calendar, FileText } from 'lucide-react';
-import { Input, Select, Button } from 'antd';
-import axios from 'axios';
 import axiosInstance from './axios';
 import { API_URL } from './api_url';
 
@@ -26,8 +24,113 @@ const ResignationForm = () => {
     reason: '',
   });
 
+  const [errors, setErrors] = useState({});
+  // *** ADDED: Validation function to check individual fields ***
+  const validateField = (name, value) => {
+    switch (name) {
+      case 'employee_name':
+        if (!value.trim()) return 'Employee name is required';
+        if (value.trim().length < 2)
+          return 'Name must be at least 2 characters';
+        return '';
+
+      case 'employee_id':
+        if (!value.trim()) return 'Employee ID is required';
+        if (value.trim().length < 3)
+          return 'Employee ID must be at least 3 characters';
+        return '';
+
+      case 'email':
+        if (!value.trim()) return 'Email is required';
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value))
+          return 'Please enter a valid email address';
+        return '';
+
+      case 'department':
+        if (!value.trim()) return 'Department is required';
+        return '';
+
+      case 'designation':
+        if (!value.trim()) return 'Designation is required';
+        return '';
+
+      case 'notice_period':
+        if (!value) return 'Notice period is required';
+        const days = parseInt(value);
+        if (isNaN(days) || days < 30)
+          return 'Notice period must be at least 30 days';
+        return '';
+
+      case 'resignation_date':
+        if (!value) return 'Resignation date is required';
+        const today = new Date();
+        const selectedDate = new Date(value);
+        today.setHours(0, 0, 0, 0);
+        selectedDate.setHours(0, 0, 0, 0);
+        if (selectedDate < today)
+          return 'Resignation date cannot be in the past';
+        return '';
+
+      case 'last_working_date':
+        if (!value) return 'Last working date is required';
+        if (resignation.resignation_date && value) {
+          const resignDate = new Date(resignation.resignation_date);
+          const lastWorkDate = new Date(value);
+          if (lastWorkDate < resignDate)
+            return 'Last working date must be after resignation date';
+        }
+        return '';
+
+      case 'reason':
+        if (!value.trim()) return 'Reason for resignation is required';
+        if (value.trim().length < 10)
+          return 'Please provide a detailed reason (at least 10 characters)';
+        return '';
+
+      default:
+        return '';
+    }
+  };
+
   const handleInputChange = e => {
-    setResignation({ ...resignation, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setResignation({ ...resignation, [name]: value });
+    // const error = validateField(name, value);
+    // setErrors(prev => ({
+    //   ...prev,
+    //   [name]: error,
+    // }));
+    // if (name === 'resignation_date' && resignation.last_working_date) {
+    //   const lastWorkError = validateField(
+    //     'last_working_date',
+    //     resignation.last_working_date
+    //   );
+    //   setErrors(prev => ({
+    //     ...prev,
+    //     last_working_date: lastWorkError,
+    //   }));
+    // }
+  };
+  const handleFieldBlur = e => {
+    const { name, value } = e.target;
+
+    // *** ADDED: Validate the field and update errors state ***
+    const error = validateField(name, value);
+    setErrors(prev => ({
+      ...prev,
+      [name]: error,
+    }));
+    if (name === 'resignation_date' && resignation.last_working_date) {
+      const lastWorkError = validateField(
+        'last_working_date',
+        resignation.last_working_date
+      );
+      setErrors(prev => ({
+        ...prev,
+        last_working_date: lastWorkError,
+      }));
+    }
   };
 
   const handleSubmit = async e => {
@@ -38,7 +141,7 @@ const ResignationForm = () => {
         resignation
       );
       console.log('Response', res);
-      toast.success('Resignation submitted successfully!');
+      toast.success('Resignation form submitted successfully!');
       setResignation({
         employee_name: '',
         employee_id: '',
@@ -51,12 +154,13 @@ const ResignationForm = () => {
         last_working_date: '',
         reason: '',
       });
+      setErrors({});
     } catch (error) {
       if (error.response) {
         console.error('Server validation errors:', error.response.data.errors);
         alert(`Error: ${error.response.data.message || 'Invalid data.'}`);
       } else {
-        console.error('Posting resignation failed', error);
+        toast.error('Posting resignation form failed', error);
       }
     }
   };
@@ -106,9 +210,15 @@ const ResignationForm = () => {
                     placeholder="Enter your name"
                     value={resignation.employee_name}
                     onChange={handleInputChange}
+                    onBlur={handleFieldBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
+                  {errors.employee_name && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.employee_name}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -120,9 +230,15 @@ const ResignationForm = () => {
                     placeholder="Enter your employee id"
                     value={resignation.employee_id}
                     onChange={handleInputChange}
+                    onBlur={handleFieldBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
+                  {errors.employee_id && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.employee_id}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -138,9 +254,13 @@ const ResignationForm = () => {
                     placeholder="Enter your email"
                     value={resignation.email}
                     onChange={handleInputChange}
+                    onBlur={handleFieldBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  )}
                 </div>
                 <div>
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
@@ -153,9 +273,15 @@ const ResignationForm = () => {
                     placeholder="Enter your department"
                     value={resignation.department}
                     onChange={handleInputChange}
+                    onBlur={handleFieldBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
+                  {errors.department && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.department}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -171,31 +297,32 @@ const ResignationForm = () => {
                     placeholder="Enter your designation"
                     value={resignation.designation}
                     onChange={handleInputChange}
+                    onBlur={handleFieldBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
+                  {errors.designation && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.designation}
+                    </p>
+                  )}
                 </div>
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Branch
                   </label>
-                  <select
+                  <Select
                     name="branch"
                     value={resignation.branch}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="">Select Branch</option>
                     <option value="Main Office">Main Office</option>
                     <option value="Branch A">Branch A</option>
                     <option value="Branch B">Branch B</option>
                     <option value="Remote">Remote</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Row 4: Notice Period and Resignation Date */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  </Select>
+                </div> */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Notice Period (Days)
@@ -206,10 +333,20 @@ const ResignationForm = () => {
                     value={resignation.notice_period}
                     min={30}
                     onChange={handleInputChange}
+                    onBlur={handleFieldBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
+                  {errors.notice_period && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.notice_period}
+                    </p>
+                  )}
                 </div>
+              </div>
+
+              {/* Row 4: Notice Period and Resignation Date */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Resignation Date
@@ -217,21 +354,31 @@ const ResignationForm = () => {
                   <div className="relative">
                     <input
                       type="date"
+                      id="resignation_date"
                       name="resignation_date"
                       value={resignation.resignation_date}
                       onChange={handleInputChange}
+                      onBlur={handleFieldBlur}
                       placeholder="Pick a date"
                       className="w-full px-4 py-3 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
-                    <Calendar className="absolute right-3 top-3 h-5 w-5 text-gray-400 cursor-pointer  hover:text-gray-900 transition-all duration-300 ease-in-out" />
+                    <Calendar
+                      onClick={() =>
+                        document
+                          .getElementById('resignation_date')
+                          .showPicker?.() ||
+                        document.getElementById('resignation_date').focus()
+                      }
+                      className="absolute right-3 top-3 h-5 w-5 text-gray-400 cursor-pointer  hover:text-gray-900 transition-all duration-300 ease-in-out"
+                    />
                   </div>
+                  {errors.resignation_date && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.resignation_date}
+                    </p>
+                  )}
                 </div>
-              </div>
-
-              {/* Row 5: Last Working Date */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div></div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Last Working Date
@@ -239,15 +386,30 @@ const ResignationForm = () => {
                   <div className="relative">
                     <input
                       type="date"
+                      id="last_working_date"
                       name="last_working_date"
                       value={resignation.last_working_date}
                       onChange={handleInputChange}
+                      onBlur={handleFieldBlur}
                       placeholder="Pick a date"
                       className="w-full px-4 py-3 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
-                    <Calendar className="absolute right-3 top-3 h-5 w-5 text-gray-400 cursor-pointer  hover:text-gray-900 transition-all duration-300 ease-in-out" />
+                    <Calendar
+                      onClick={() =>
+                        document
+                          .getElementById('last_working_date')
+                          .showPicker?.() ||
+                        document.getElementById('last_working_date').focus()
+                      }
+                      className="absolute right-3 top-3 h-5 w-5 text-gray-400 cursor-pointer  hover:text-gray-900 transition-all duration-300 ease-in-out"
+                    />
                   </div>
+                  {errors.last_working_date && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.last_working_date}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -260,11 +422,15 @@ const ResignationForm = () => {
                   name="reason"
                   value={resignation.reason}
                   onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
                   placeholder="Please provide a brief reason for your resignation..."
                   rows={6}
                   className="w-full px-4 py-3 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   required
                 />
+                {errors.reason && (
+                  <p className="mt-1 text-sm text-red-600">{errors.reason}</p>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -272,13 +438,13 @@ const ResignationForm = () => {
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="w-full sm:w-auto px-8 py-3 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                  className="w-full cursor-pointer sm:w-auto px-8 py-3 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                  className="w-full cursor-pointer sm:w-auto px-8 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                 >
                   Submit Resignation
                 </button>
