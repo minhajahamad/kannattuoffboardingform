@@ -3,9 +3,8 @@ import { User, Building2, Calendar, FileText } from 'lucide-react';
 import axiosInstance from './axios';
 import { API_URL } from './api_url';
 
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -96,26 +95,10 @@ const ResignationForm = () => {
   const handleInputChange = e => {
     const { name, value } = e.target;
     setResignation({ ...resignation, [name]: value });
-    // const error = validateField(name, value);
-    // setErrors(prev => ({
-    //   ...prev,
-    //   [name]: error,
-    // }));
-    // if (name === 'resignation_date' && resignation.last_working_date) {
-    //   const lastWorkError = validateField(
-    //     'last_working_date',
-    //     resignation.last_working_date
-    //   );
-    //   setErrors(prev => ({
-    //     ...prev,
-    //     last_working_date: lastWorkError,
-    //   }));
-    // }
   };
   const handleFieldBlur = e => {
     const { name, value } = e.target;
 
-    // *** ADDED: Validate the field and update errors state ***
     const error = validateField(name, value);
     setErrors(prev => ({
       ...prev,
@@ -133,8 +116,32 @@ const ResignationForm = () => {
     }
   };
 
+  const handleDateChange = (date, fieldName) => {
+    const dateString = date ? date.toISOString().split('T')[0] : '';
+    setResignation({ ...resignation, [fieldName]: dateString });
+
+    const error = validateField(fieldName, dateString);
+    setErrors(prev => ({
+      ...prev,
+      [fieldName]: error,
+    }));
+
+    // If resignation date changes, revalidate last working date
+    if (fieldName === 'resignation_date' && resignation.last_working_date) {
+      const lastWorkError = validateField(
+        'last_working_date',
+        resignation.last_working_date
+      );
+      setErrors(prev => ({
+        ...prev,
+        last_working_date: lastWorkError,
+      }));
+    }
+  };
+
   const handleSubmit = async e => {
     e.preventDefault();
+   
     try {
       const res = await axiosInstance.post(
         API_URL.RESIGNATION.POST_RESIGNATION,
@@ -172,6 +179,135 @@ const ResignationForm = () => {
 
   return (
     <>
+      <style jsx>{`
+        /* Custom DatePicker Styles */
+        .react-datepicker-wrapper {
+          width: 100%;
+        }
+
+        .react-datepicker__input-container {
+          width: 100%;
+        }
+
+        .react-datepicker__input-container input {
+          width: 100% !important;
+          padding: 12px 40px 12px 16px !important;
+          border: 1px solid #d1d5db !important;
+          border-radius: 6px !important;
+          background-color: white !important;
+          color: #111827 !important;
+          font-size: 14px !important;
+          transition: all 0.2s ease-in-out !important;
+        }
+
+        .react-datepicker__input-container input:focus {
+          outline: none !important;
+          ring: 2px !important;
+          ring-color: #3b82f6 !important;
+          border-color: transparent !important;
+          box-shadow: 0 0 0 2px #3b82f6 !important;
+        }
+
+        .react-datepicker__input-container input::placeholder {
+          color: #9ca3af !important;
+        }
+
+        /* DatePicker Popup Styles */
+        .react-datepicker {
+          font-family: inherit !important;
+          border: 1px solid #e5e7eb !important;
+          border-radius: 8px !important;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+            0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+          background-color: white !important;
+        }
+
+        .react-datepicker__header {
+          background-color: #f9fafb !important;
+          border-bottom: 1px solid #e5e7eb !important;
+          border-radius: 8px 8px 0 0 !important;
+          padding: 16px 0 !important;
+        }
+
+        .react-datepicker__current-month {
+          color: #111827 !important;
+          font-weight: 600 !important;
+          font-size: 16px !important;
+        }
+
+        .react-datepicker__day-names {
+          margin-top: 8px !important;
+        }
+
+        .react-datepicker__day-name {
+          color: #6b7280 !important;
+          font-weight: 500 !important;
+          font-size: 12px !important;
+          width: 32px !important;
+          height: 32px !important;
+          line-height: 32px !important;
+        }
+
+        .react-datepicker__day {
+          width: 32px !important;
+          height: 32px !important;
+          line-height: 32px !important;
+          color: #374151 !important;
+          font-size: 14px !important;
+          border-radius: 6px !important;
+          transition: all 0.2s ease-in-out !important;
+        }
+
+        .react-datepicker__day:hover {
+          background-color: #f3f4f6 !important;
+          color: #111827 !important;
+        }
+
+        .react-datepicker__day--selected {
+          background-color: #3b82f6 !important;
+          color: white !important;
+        }
+
+        .react-datepicker__day--selected:hover {
+          background-color: #2563eb !important;
+        }
+
+        .react-datepicker__day--today {
+          background-color: #dbeafe !important;
+          color: #1d4ed8 !important;
+          font-weight: 600 !important;
+        }
+
+        .react-datepicker__day--disabled {
+          color: #d1d5db !important;
+          cursor: not-allowed !important;
+        }
+
+        .react-datepicker__day--disabled:hover {
+          background-color: transparent !important;
+        }
+
+        .react-datepicker__navigation {
+          top: 16px !important;
+        }
+
+        .react-datepicker__navigation--previous {
+          left: 16px !important;
+        }
+
+        .react-datepicker__navigation--next {
+          right: 16px !important;
+        }
+
+        .react-datepicker__navigation-icon::before {
+          border-color: #6b7280 !important;
+        }
+
+        .react-datepicker__navigation:hover
+          .react-datepicker__navigation-icon::before {
+          border-color: #374151 !important;
+        }
+      `}</style>
       <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -352,15 +488,19 @@ const ResignationForm = () => {
                     Resignation Date
                   </label>
                   <div className="relative">
-                    <input
-                      type="date"
-                      id="resignation_date"
-                      name="resignation_date"
-                      value={resignation.resignation_date}
-                      onChange={handleInputChange}
-                      onBlur={handleFieldBlur}
-                      placeholder="Pick a date"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    <DatePicker
+                      selected={
+                        resignation.resignation_date
+                          ? new Date(resignation.resignation_date)
+                          : null
+                      }
+                      onChange={date =>
+                        handleDateChange(date, 'resignation_date')
+                      }
+                      placeholderText="Select resignation date"
+                      dateFormat="dd-MM-yyyy"
+                      minDate={new Date()}
+                      className="w-full"
                       required
                     />
                     <Calendar
@@ -373,6 +513,7 @@ const ResignationForm = () => {
                       className="absolute right-3 top-3 h-5 w-5 text-gray-400 cursor-pointer  hover:text-gray-900 transition-all duration-300 ease-in-out"
                     />
                   </div>
+
                   {errors.resignation_date && (
                     <p className="mt-1 text-sm text-red-600">
                       {errors.resignation_date}
@@ -384,15 +525,23 @@ const ResignationForm = () => {
                     Last Working Date
                   </label>
                   <div className="relative">
-                    <input
-                      type="date"
-                      id="last_working_date"
-                      name="last_working_date"
-                      value={resignation.last_working_date}
-                      onChange={handleInputChange}
-                      onBlur={handleFieldBlur}
-                      placeholder="Pick a date"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    <DatePicker
+                      selected={
+                        resignation.last_working_date
+                          ? new Date(resignation.last_working_date)
+                          : null
+                      }
+                      onChange={date =>
+                        handleDateChange(date, 'last_working_date')
+                      }
+                      placeholderText="Select last working date"
+                      dateFormat="dd-MM-yyyy"
+                      minDate={
+                        resignation.resignation_date
+                          ? new Date(resignation.resignation_date)
+                          : new Date()
+                      }
+                      className="w-full"
                       required
                     />
                     <Calendar
