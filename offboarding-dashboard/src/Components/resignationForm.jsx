@@ -72,6 +72,9 @@ const ResignationForm = () => {
         return '';
 
       case 'last_working_date':
+        if (!resignation.resignation_date) {
+          return 'Please select a resignation date before choosing your last working date';
+        }
         if (!value) return 'Last working date is required';
         if (resignation.resignation_date && value) {
           const resignDate = new Date(resignation.resignation_date);
@@ -94,8 +97,24 @@ const ResignationForm = () => {
 
   const handleInputChange = e => {
     const { name, value } = e.target;
-    setResignation({ ...resignation, [name]: value });
+
+    setResignation(prev => {
+      let updated = { ...prev, [name]: value };
+
+      // If notice_period changes and resignation_date is set, recalc last working date
+      if (name === 'notice_period' && prev.resignation_date) {
+        const noticeDays = parseInt(value);
+        if (!isNaN(noticeDays)) {
+          const resignDate = new Date(prev.resignation_date);
+          resignDate.setDate(resignDate.getDate() + noticeDays);
+          updated.last_working_date = resignDate.toISOString().split('T')[0];
+        }
+      }
+
+      return updated;
+    });
   };
+
   const handleFieldBlur = e => {
     const { name, value } = e.target;
 
@@ -117,8 +136,28 @@ const ResignationForm = () => {
   };
 
   const handleDateChange = (date, fieldName) => {
-    const dateString = date ? date.toISOString().split('T')[0] : '';
-    setResignation({ ...resignation, [fieldName]: dateString });
+    const dateString = date
+      ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+          2,
+          '0'
+        )}-${String(date.getDate()).padStart(2, '0')}`
+      : '';
+
+    setResignation(prev => {
+      let updated = { ...prev, [fieldName]: dateString };
+
+      // Auto-fill last working date if resignation_date is set
+      if (fieldName === 'resignation_date' && prev.notice_period) {
+        const noticeDays = parseInt(prev.notice_period);
+        if (!isNaN(noticeDays) && date) {
+          const lastDate = new Date(date);
+          lastDate.setDate(lastDate.getDate() + noticeDays);
+          updated.last_working_date = lastDate.toISOString().split('T')[0];
+        }
+      }
+
+      return updated;
+    });
 
     const error = validateField(fieldName, dateString);
     setErrors(prev => ({
@@ -141,7 +180,7 @@ const ResignationForm = () => {
 
   const handleSubmit = async e => {
     e.preventDefault();
-   
+
     try {
       const res = await axiosInstance.post(
         API_URL.RESIGNATION.POST_RESIGNATION,
@@ -542,8 +581,9 @@ const ResignationForm = () => {
                           : new Date()
                       }
                       className="w-full"
-                      required
+                      readOnly // <-- Optional: prevents manual change
                     />
+
                     <Calendar
                       onClick={() =>
                         document
