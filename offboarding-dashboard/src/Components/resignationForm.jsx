@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { User, Building2, Calendar, FileText } from 'lucide-react';
 import axiosInstance from './axios';
 import { API_URL } from './api_url';
@@ -24,6 +24,9 @@ const ResignationForm = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const resignationDateRef = useRef(null);
+  const lastWorkingDateRef = useRef(null);
+
   // *** ADDED: Validation function to check individual fields ***
   const validateField = (name, value) => {
     switch (name) {
@@ -98,8 +101,15 @@ const ResignationForm = () => {
   const handleInputChange = e => {
     const { name, value } = e.target;
 
+    let filteredValue = value;
+
+    // Restrict employee_name to letters and spaces only
+    if (name === 'employee_name') {
+      filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    }
+
     setResignation(prev => {
-      let updated = { ...prev, [name]: value };
+      let updated = { ...prev, [name]: filteredValue };
 
       // If notice_period changes and resignation_date is set, recalc last working date
       if (name === 'notice_period' && prev.resignation_date) {
@@ -180,6 +190,22 @@ const ResignationForm = () => {
 
   const handleSubmit = async e => {
     e.preventDefault();
+
+    // Validate all fields
+    let newErrors = {};
+    Object.keys(resignation).forEach(field => {
+      const error = validateField(field, resignation[field]);
+      if (error) {
+        newErrors[field] = error;
+      }
+    });
+
+    // If there are errors, show them and stop submission
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error('Please correct the errors before submitting.');
+      return;
+    }
 
     try {
       const res = await axiosInstance.post(
@@ -376,8 +402,8 @@ const ResignationForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <User className="h-4 w-4 mr-2" />
-                    Employee Name
+                    {/* <User className="h-4 w-4 mr-2" /> */}
+                    Employee Name *
                   </label>
                   <input
                     type="text"
@@ -387,7 +413,7 @@ const ResignationForm = () => {
                     onChange={handleInputChange}
                     onBlur={handleFieldBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
+                    // required
                   />
                   {errors.employee_name && (
                     <p className="mt-1 text-sm text-red-600">
@@ -397,7 +423,7 @@ const ResignationForm = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Employee ID
+                    Employee ID *
                   </label>
                   <input
                     type="text"
@@ -407,7 +433,7 @@ const ResignationForm = () => {
                     onChange={handleInputChange}
                     onBlur={handleFieldBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
+                    // required
                   />
                   {errors.employee_id && (
                     <p className="mt-1 text-sm text-red-600">
@@ -421,7 +447,7 @@ const ResignationForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
+                    Email Address *
                   </label>
                   <input
                     type="email"
@@ -431,7 +457,7 @@ const ResignationForm = () => {
                     onChange={handleInputChange}
                     onBlur={handleFieldBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
+                    // required
                   />
                   {errors.email && (
                     <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -439,8 +465,8 @@ const ResignationForm = () => {
                 </div>
                 <div>
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <Building2 className="h-4 w-4 mr-2" />
-                    Department
+                    {/* <Building2 className="h-4 w-4 mr-2" /> */}
+                    Department *
                   </label>
                   <input
                     type="text"
@@ -450,7 +476,7 @@ const ResignationForm = () => {
                     onChange={handleInputChange}
                     onBlur={handleFieldBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
+                    // required
                   />
                   {errors.department && (
                     <p className="mt-1 text-sm text-red-600">
@@ -464,7 +490,7 @@ const ResignationForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Designation
+                    Designation *
                   </label>
                   <input
                     type="text"
@@ -474,7 +500,7 @@ const ResignationForm = () => {
                     onChange={handleInputChange}
                     onBlur={handleFieldBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
+                    // required
                   />
                   {errors.designation && (
                     <p className="mt-1 text-sm text-red-600">
@@ -500,7 +526,7 @@ const ResignationForm = () => {
                 </div> */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Notice Period (Days)
+                    Notice Period (Days) *
                   </label>
                   <input
                     type="number"
@@ -510,7 +536,7 @@ const ResignationForm = () => {
                     onChange={handleInputChange}
                     onBlur={handleFieldBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
+                    // required
                   />
                   {errors.notice_period && (
                     <p className="mt-1 text-sm text-red-600">
@@ -524,10 +550,11 @@ const ResignationForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Resignation Date
+                    Resignation Date *
                   </label>
                   <div className="relative">
                     <DatePicker
+                      ref={resignationDateRef}
                       selected={
                         resignation.resignation_date
                           ? new Date(resignation.resignation_date)
@@ -540,15 +567,16 @@ const ResignationForm = () => {
                       dateFormat="dd-MM-yyyy"
                       minDate={new Date()}
                       className="w-full"
-                      required
+                      // required
                     />
                     <Calendar
-                      onClick={() =>
-                        document
-                          .getElementById('resignation_date')
-                          .showPicker?.() ||
-                        document.getElementById('resignation_date').focus()
-                      }
+                      // onClick={() =>
+                      //   document
+                      //     .getElementById('resignation_date')
+                      //     .showPicker?.() ||
+                      //   document.getElementById('resignation_date').focus()
+                      // }
+                      onClick={() => resignationDateRef.current?.setOpen(true)}
                       className="absolute right-3 top-3 h-5 w-5 text-gray-400 cursor-pointer  hover:text-gray-900 transition-all duration-300 ease-in-out"
                     />
                   </div>
@@ -605,7 +633,7 @@ const ResignationForm = () => {
               {/* Reason for Resignation */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reason for Resignation
+                  Reason for Resignation *
                 </label>
                 <textarea
                   name="reason"
@@ -615,7 +643,7 @@ const ResignationForm = () => {
                   placeholder="Please provide a brief reason for your resignation..."
                   rows={6}
                   className="w-full px-4 py-3 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  required
+                  // required
                 />
                 {errors.reason && (
                   <p className="mt-1 text-sm text-red-600">{errors.reason}</p>
