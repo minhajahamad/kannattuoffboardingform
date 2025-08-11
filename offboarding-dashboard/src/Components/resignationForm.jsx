@@ -25,7 +25,6 @@ const ResignationForm = () => {
 
   const [errors, setErrors] = useState({});
   const resignationDateRef = useRef(null);
-  const lastWorkingDateRef = useRef(null);
 
   // *** ADDED: Validation function to check individual fields ***
   const validateField = (name, value) => {
@@ -55,6 +54,10 @@ const ResignationForm = () => {
 
       case 'designation':
         if (!value.trim()) return 'Designation is required';
+        return '';
+
+      case 'branch':
+        if (!value.trim()) return 'Branch is required';
         return '';
 
       case 'notice_period':
@@ -185,6 +188,16 @@ const ResignationForm = () => {
         ...prev,
         last_working_date: lastWorkError,
       }));
+    }
+  };
+
+  const handleEnterKey = e => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // stop form submission
+
+      const form = e.target.form;
+      const index = Array.prototype.indexOf.call(form, e.target);
+      form.elements[index + 1]?.focus(); // focus next element
     }
   };
 
@@ -407,6 +420,7 @@ const ResignationForm = () => {
                   </label>
                   <input
                     type="text"
+                    onKeyDown={handleEnterKey}
                     name="employee_name"
                     placeholder="Enter your name"
                     value={resignation.employee_name}
@@ -427,6 +441,7 @@ const ResignationForm = () => {
                   </label>
                   <input
                     type="text"
+                    onKeyDown={handleEnterKey}
                     name="employee_id"
                     placeholder="Enter your employee id"
                     value={resignation.employee_id}
@@ -453,6 +468,7 @@ const ResignationForm = () => {
                     type="email"
                     name="email"
                     placeholder="Enter your email"
+                    onKeyDown={handleEnterKey}
                     value={resignation.email}
                     onChange={handleInputChange}
                     onBlur={handleFieldBlur}
@@ -472,6 +488,7 @@ const ResignationForm = () => {
                     type="text"
                     name="department"
                     placeholder="Enter your department"
+                    onKeyDown={handleEnterKey}
                     value={resignation.department}
                     onChange={handleInputChange}
                     onBlur={handleFieldBlur}
@@ -496,6 +513,7 @@ const ResignationForm = () => {
                     type="text"
                     name="designation"
                     placeholder="Enter your designation"
+                    onKeyDown={handleEnterKey}
                     value={resignation.designation}
                     onChange={handleInputChange}
                     onBlur={handleFieldBlur}
@@ -508,22 +526,24 @@ const ResignationForm = () => {
                     </p>
                   )}
                 </div>
-                {/* <div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Branch
+                    Branch *
                   </label>
-                  <Select
+                  <input
+                    type="text"
                     name="branch"
+                    placeholder="Enter your branch name"
+                    onKeyDown={handleEnterKey}
                     value={resignation.branch}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="Main Office">Main Office</option>
-                    <option value="Branch A">Branch A</option>
-                    <option value="Branch B">Branch B</option>
-                    <option value="Remote">Remote</option>
-                  </Select>
-                </div> */}
+                    onBlur={handleFieldBlur}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  {errors.designation && (
+                    <p className="mt-1 text-sm text-red-600">{errors.branch}</p>
+                  )}
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Notice Period (Days) *
@@ -531,6 +551,7 @@ const ResignationForm = () => {
                   <input
                     type="number"
                     name="notice_period"
+                    onKeyDown={handleEnterKey}
                     value={resignation.notice_period}
                     min={30}
                     onChange={handleInputChange}
@@ -554,6 +575,7 @@ const ResignationForm = () => {
                   </label>
                   <div className="relative">
                     <DatePicker
+                      // onKeyDown={handleEnterKey}
                       ref={resignationDateRef}
                       selected={
                         resignation.resignation_date
@@ -593,6 +615,7 @@ const ResignationForm = () => {
                   </label>
                   <div className="relative">
                     <DatePicker
+                      onKeyDown={handleEnterKey}
                       selected={
                         resignation.last_working_date
                           ? new Date(resignation.last_working_date)
@@ -637,6 +660,7 @@ const ResignationForm = () => {
                 </label>
                 <textarea
                   name="reason"
+                  onKeyDown={handleEnterKey}
                   value={resignation.reason}
                   onChange={handleInputChange}
                   onBlur={handleFieldBlur}
